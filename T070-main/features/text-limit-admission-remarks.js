@@ -4,7 +4,7 @@
  * Filename: text-limit-admission-remarks.js
  * ============================================================================
  * Enforces a character limit on the Admission Remarks textarea in the
- * Update Admission modal, with a live character counter indicator.
+ * Update Admission modal, displaying remaining characters / max characters.
  * ============================================================================
  */
 
@@ -18,6 +18,10 @@
   function applyLimit() {
     const inputs = document.querySelectorAll(SELECTOR);
     inputs.forEach((input) => {
+      // Check if this is the admission remarks field
+      const isAdmissionModal = input.id === 'admissionRemarks' || input.closest('form')?.querySelector('#admissionStatus');
+      if (!isAdmissionModal && input.id !== 'admissionRemarks') return;
+
       if (input.dataset.limitAttached === 'admission-remarks') return;
       input.dataset.limitAttached = 'admission-remarks';
       input.setAttribute('maxlength', MAX_LENGTH);
@@ -26,16 +30,17 @@
       if (!counter) {
         counter = document.createElement('small');
         counter.className = 'char-limit-admission-remarks char-counter-badge';
-        counter.style.cssText = 'display:block; text-align:right; font-size:0.75rem; color:#64748b; margin-top:2px;';
+        counter.style.cssText = 'display:block; text-align:right; font-size:0.78rem; font-weight:500; color:#64748b; margin-top:4px;';
         input.parentNode.appendChild(counter);
       }
 
       function updateCounter() {
         const currentLength = input.value.length;
-        counter.textContent = `${currentLength} / ${MAX_LENGTH} characters`;
-        if (currentLength >= MAX_LENGTH) {
+        const remaining = Math.max(0, MAX_LENGTH - currentLength);
+        counter.textContent = `${remaining} / ${MAX_LENGTH} remaining`;
+        if (remaining === 0) {
           counter.style.color = '#ef4444';
-        } else if (currentLength >= MAX_LENGTH * 0.9) {
+        } else if (remaining <= MAX_LENGTH * 0.1) {
           counter.style.color = '#f59e0b';
         } else {
           counter.style.color = '#64748b';

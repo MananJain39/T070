@@ -4,7 +4,7 @@
  * Filename: text-limit-admission-evidence.js
  * ============================================================================
  * Enforces a character limit on the Admission Evidence Reference input
- * in Record creation and edit forms, with a live character counter indicator.
+ * in Record creation and edit forms, displaying remaining characters / max characters.
  * ============================================================================
  */
 
@@ -26,16 +26,17 @@
       if (!counter) {
         counter = document.createElement('small');
         counter.className = 'char-limit-admission-evidence char-counter-badge';
-        counter.style.cssText = 'display:block; text-align:right; font-size:0.75rem; color:#64748b; margin-top:2px;';
+        counter.style.cssText = 'display:block; text-align:right; font-size:0.78rem; font-weight:500; color:#64748b; margin-top:4px;';
         input.parentNode.appendChild(counter);
       }
 
       function updateCounter() {
         const currentLength = input.value.length;
-        counter.textContent = `${currentLength} / ${MAX_LENGTH} characters`;
-        if (currentLength >= MAX_LENGTH) {
+        const remaining = Math.max(0, MAX_LENGTH - currentLength);
+        counter.textContent = `${remaining} / ${MAX_LENGTH} remaining`;
+        if (remaining === 0) {
           counter.style.color = '#ef4444';
-        } else if (currentLength >= MAX_LENGTH * 0.9) {
+        } else if (remaining <= MAX_LENGTH * 0.1) {
           counter.style.color = '#f59e0b';
         } else {
           counter.style.color = '#64748b';

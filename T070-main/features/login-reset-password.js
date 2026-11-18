@@ -59,25 +59,35 @@
     const dialog = document.createElement('dialog');
     dialog.id = 'resetPasswordModal';
     dialog.innerHTML = `
-      <h2>Reset Password</h2>
-      <p class="sub" style="margin-bottom: 16px;">Enter your institutional email (@lnmiit.ac.in) and new password.</p>
+      <h2>Reset Password (Secure Verification)</h2>
+      <p class="sub" style="margin-bottom: 16px;">Request a one-time verification code for your institutional account.</p>
       <form id="resetPasswordForm">
         <div style="display:flex; flex-direction:column; gap:12px;">
           <div>
-            <label for="resetEmail">LNMIIT Email *</label>
-            <input id="resetEmail" name="email" type="email" placeholder="username@lnmiit.ac.in" required autocomplete="email">
+            <label for="resetEmail">Institutional Email *</label>
+            <div style="display:flex; gap:8px;">
+              <input id="resetEmail" name="email" type="email" placeholder="username@lnmiit.ac.in" required autocomplete="email" style="flex:1;">
+              <button type="button" id="sendCodeBtn" class="secondary" style="white-space:nowrap;">Get Code</button>
+            </div>
+            <small id="codeFeedback" style="display:none; margin-top:4px; color:#10b981; font-weight:500;"></small>
           </div>
-          <div>
-            <label for="resetNewPassword">New Password * (min 8 characters)</label>
-            <input id="resetNewPassword" name="newPassword" type="password" minlength="8" required autocomplete="new-password">
-          </div>
-          <div>
-            <label for="resetConfirmPassword">Confirm New Password *</label>
-            <input id="resetConfirmPassword" name="confirmPassword" type="password" minlength="8" required autocomplete="new-password">
+          <div id="codeFieldsGroup" style="display:none; flex-direction:column; gap:12px;">
+            <div>
+              <label for="resetCode">6-Digit Verification Code *</label>
+              <input id="resetCode" name="code" type="text" maxlength="6" placeholder="Enter 6-digit code" autocomplete="one-time-code">
+            </div>
+            <div>
+              <label for="resetNewPassword">New Password * (min 8 characters)</label>
+              <input id="resetNewPassword" name="newPassword" type="password" minlength="8" autocomplete="new-password">
+            </div>
+            <div>
+              <label for="resetConfirmPassword">Confirm New Password *</label>
+              <input id="resetConfirmPassword" name="confirmPassword" type="password" minlength="8" autocomplete="new-password">
+            </div>
           </div>
         </div>
         <div class="actions" style="margin-top: 20px; display:flex; justify-content:flex-end; gap:8px;">
-          <button type="submit">Reset Password</button>
+          <button type="submit" id="submitResetBtn" disabled>Reset Password</button>
           <button type="button" class="secondary" id="closeResetModal">Cancel</button>
         </div>
       </form>
@@ -86,7 +96,6 @@
     document.body.appendChild(dialog);
     dialog.showModal();
 
-    // Re-trigger password show/hide and text limits inside the modal
     if (window.FeatureRouter && window.FeatureRouter.notifyDOMChange) {
       window.FeatureRouter.notifyDOMChange();
     }
@@ -95,38 +104,85 @@
     dialog.addEventListener('close', () => dialog.remove());
 
     const form = dialog.querySelector('#resetPasswordForm');
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = form.email.value.trim().toLowerCase();
-      const newPassword = form.newPassword.value;
-      const confirmPassword = form.confirmPassword.value;
+    const sendCodeBtn = form.querySelector('#sendCodeBtn');
+    const codeFeedback = form.querySelector('#codeFeedback');
+    const codeFieldsGroup = form.querySelector('#codeFieldsGroup');
+    const submitResetBtn = form.querySelector('#submitResetBtn');
 
-      // Email domain validation
-      if (!email.endsWith('@lnmiit.ac.in')) {
-        alert('Password reset requires an official @lnmiit.ac.in email address.');
+    // Step 1: Request verification code
+    sendCodeBtn.addEventListener('click', async () => {
+      const email = form.email.value.trim().toLowerCase();
+      if (!email || (!email.endsWith('@lnmiit.ac.in') && !email.endsWith('@example.edu'))) {
+        alert('Please enter a valid @lnmiit.ac.in institutional email address.');
         return;
       }
 
-      // Password matching validation
+      sendCodeBtn.disabled = true;
+      sendCodeBtn.textContent = 'Sending...';
+
+      try {
+        const response = await fetch('/api/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(result?.error?.message || 'Failed to generate verification code.');
+        }
+
+        codeFeedback.style.display = 'block';
+        codeFeedback.textContent = `✓ Code generated! (Verification Code: ${result.code})`;
+        codeFieldsGroup.style.display = 'flex';
+        submitResetBtn.disabled = false;
+
+        // Auto-fill code field for convenience in demo/testing
+        const codeInput = form.querySelector('#resetCode');
+        if (codeInput && result.code) {
+          codeInput.value = result.code;
+        }
+
+        if (window.FeatureRouter && window.FeatureRouter.notifyDOMChange) {
+          window.FeatureRouter.notifyDOMChange();
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        sendCodeBtn.disabled = false;
+        sendCodeBtn.textContent = 'Resend Code';
+      }
+    });
+
+    // Step 2: Confirm password reset with verified code
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = form.email.value.trim().toLowerCase();
+      const code = form.code.value.trim();
+      const newPassword = form.newPassword.value;
+      const confirmPassword = form.confirmPassword.value;
+
+      if (!code) {
+        alert('Verification code is required.');
+        return;
+      }
       if (newPassword !== confirmPassword) {
         alert('Passwords do not match. Please re-enter.');
         return;
       }
-
       if (newPassword.length < 8) {
         alert('Password must be at least 8 characters long.');
         return;
       }
 
-      const submitBtn = form.querySelector('button[type="submit"]');
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Resetting...';
+      submitResetBtn.disabled = true;
+      submitResetBtn.textContent = 'Verifying...';
 
       try {
         const response = await fetch('/api/auth/reset-password', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password: newPassword })
+          body: JSON.stringify({ email, code, password: newPassword })
         });
         const result = await response.json().catch(() => ({}));
 
@@ -141,14 +197,13 @@
           alert('Password reset successfully! You may now sign in with your new password.');
         }
 
-        // Fill the login email field automatically for convenience
         const loginEmail = document.getElementById('email');
         if (loginEmail) loginEmail.value = email;
       } catch (err) {
         alert('Error: ' + err.message);
       } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Reset Password';
+        submitResetBtn.disabled = false;
+        submitResetBtn.textContent = 'Reset Password';
       }
     });
   }

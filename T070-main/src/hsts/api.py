@@ -20,13 +20,15 @@ class Application:
         self.service = Service(self.db)
         self.lock = threading.RLock()
 
-    def handle(self, method, path, query, body, authorization=''):
+    def handle(self, method, path, query, body, authorization='', client_ip='127.0.0.1', cookie_str=''):
         if path == '/api/auth/login' and method == 'POST':
-            token, user = authenticate(self.db, body.get('email',''), body.get('password',''))
+            token, user = authenticate(self.db, body.get('email',''), body.get('password',''), client_ip=client_ip)
             return 200, {'token':token,'user':user}
+        if path == '/api/auth/forgot-password' and method == 'POST':
+            return self.service.request_password_reset(body.get('email',''), client_ip=client_ip)
         if path == '/api/auth/reset-password' and method == 'POST':
-            return self.service.reset_password(body.get('email',''), body.get('password',''))
-        user = current_user(self.db, authorization)
+            return self.service.reset_password(body.get('email',''), body.get('password',''), code=body.get('code',''), client_ip=client_ip)
+        user = current_user(self.db, authorization, cookie_str=cookie_str)
         if path == '/api/auth/logout' and method == 'POST':
             token_hash = hashlib.sha256(authorization[7:].encode()).hexdigest()
             self.db.run('DELETE FROM sessions WHERE token_hash=?', (token_hash,))
@@ -67,13 +69,24 @@ class Application:
 
 class Handler(BaseHTTPRequestHandler):
     app = None
-    def _respond(self, status, payload):
+
+    def _add_security_headers(self):
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('X-Frame-Options', 'DENY')
+        self.send_header('Referrer-Policy', 'strict-origin-when-cross-origin')
+        self.send_header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'")
+
+    def _respond(self, status, payload, set_cookie=None):
         self.send_response(status)
-        self.send_header('Content-Type','application/json; charset=utf-8')
-        self.send_header('Cache-Control','no-store')
-        self.send_header('X-Content-Type-Options','nosniff')
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+        self._add_security_headers()
+        if set_cookie:
+            self.send_header('Set-Cookie', set_cookie)
         self.end_headers()
-        if payload is not None: self.wfile.write(json.dumps(payload).encode())
+        if payload is not None:
+            self.wfile.write(json.dumps(payload).encode())
 
     def _request(self):
         route = urlparse(self.path)
@@ -89,9 +102,19 @@ class Handler(BaseHTTPRequestHandler):
                 if not isinstance(body, dict): fail('VALIDATION_ERROR','JSON object required.',400)
             else: body = {}
             query = {k:v[0] for k,v in parse_qs(route.query).items()}
+            client_ip = self.client_address[0] if self.client_address else '127.0.0.1'
+            auth_header = self.headers.get('Authorization', '')
+            cookie_header = self.headers.get('Cookie', '')
             with self.app.lock:
-                status, payload = self.app.handle(self.command, route.path, query, body, self.headers.get('Authorization',''))
-            self._respond(status,payload)
+                status, payload = self.app.handle(self.command, route.path, query, body, auth_header, client_ip=client_ip, cookie_str=cookie_header)
+
+            cookie = None
+            if route.path == '/api/auth/login' and status == 200 and isinstance(payload, dict) and 'token' in payload:
+                cookie = f"hsts_session={payload['token']}; Path=/; HttpOnly; SameSite=Lax"
+            elif route.path == '/api/auth/logout' and status == 204:
+                cookie = "hsts_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax"
+
+            self._respond(status, payload, set_cookie=cookie)
         except AppError as e:
             self._respond(e.status, {'error':{'code':e.code,'message':e.message}})
         except (sqlite3.Error, OSError):
@@ -128,6 +151,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', content_type)
         self.send_header('Content-Length', str(len(data)))
+        self._add_security_headers()
         self.end_headers()
         self.wfile.write(data)
 

@@ -1,9 +1,10 @@
 import json
+import secrets
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from .domain import (ADMISSION, PROGRESSION, VERIFICATION, ROLES, choice, fail,
                      required, valid_date, transition, progress_transition)
-from .security import require_role, require_owner_or_staff, hash_password, public_user
+from .security import require_role, require_owner_or_staff, hash_password, public_user, reset_rate_limiter
 
 STUDENT, COORDINATOR, ADMIN = ROLES
 
@@ -262,18 +263,56 @@ class Service:
     def notifications(self, user):
         return self.db.all('SELECT * FROM notifications WHERE recipient_id=? ORDER BY id DESC', (user['id'],))
 
-    def reset_password(self, email, password):
+    def request_password_reset(self, email, client_ip='127.0.0.1'):
+        rate_key = f"{client_ip}:reset"
+        if reset_rate_limiter.is_rate_limited(rate_key):
+            fail('RATE_LIMIT_EXCEEDED', 'Too many password reset requests. Please wait 5 minutes.', 429)
+        email = required(email, 'Email').lower()
+        if not (email.endswith('@lnmiit.ac.in') or email.endswith('@example.edu')):
+            fail('VALIDATION_ERROR', 'Only @lnmiit.ac.in email addresses are permitted for password reset.', 422)
+        user = self.db.one('SELECT * FROM users WHERE LOWER(email)=? AND active=1', (email,))
+        if not user:
+            reset_rate_limiter.record_failure(rate_key)
+            fail('NOT_FOUND', 'No active user found with this email address.', 404)
+        code = f"{secrets.randbelow(900000) + 100000}"
+        expiry = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
+        with self.db.transaction():
+            self.db.run('UPDATE password_resets SET used=1 WHERE user_id=?', (user['id'],))
+            self.db.run('INSERT INTO password_resets(user_id,code,expires_at,used) VALUES(?,?,?,0)',
+                        (user['id'], code, expiry))
+            self.audit(user, 'PASSWORD_RESET_REQUESTED', 'user', user['id'])
+        return 200, {
+            'message': 'Verification code generated successfully. For testing/demo, your code is provided.',
+            'code': code
+        }
+
+    def reset_password(self, email, password, code='', client_ip='127.0.0.1'):
+        rate_key = f"{client_ip}:reset"
+        if reset_rate_limiter.is_rate_limited(rate_key):
+            fail('RATE_LIMIT_EXCEEDED', 'Too many attempts. Please wait 5 minutes.', 429)
         email = required(email, 'Email').lower()
         if not (email.endswith('@lnmiit.ac.in') or email.endswith('@example.edu')):
             fail('VALIDATION_ERROR', 'Only @lnmiit.ac.in email addresses are permitted for password reset.', 422)
         password = required(password, 'Password')
         if len(password) < 8:
             fail('VALIDATION_ERROR', 'Password must have at least 8 characters.', 422)
-        user = self.db.one('SELECT * FROM users WHERE LOWER(email)=?', (email,))
+        user = self.db.one('SELECT * FROM users WHERE LOWER(email)=? AND active=1', (email,))
         if not user:
-            fail('NOT_FOUND', 'No user found with the provided email address.', 404)
+            reset_rate_limiter.record_failure(rate_key)
+            fail('NOT_FOUND', 'No active user found with this email address.', 404)
+        code = required(code, 'Verification code')
+        now_iso = now()
+        reset_entry = self.db.one(
+            'SELECT * FROM password_resets WHERE user_id=? AND code=? AND used=0 AND expires_at>? ORDER BY id DESC LIMIT 1',
+            (user['id'], code.strip(), now_iso)
+        )
+        if not reset_entry:
+            reset_rate_limiter.record_failure(rate_key)
+            fail('VALIDATION_ERROR', 'Invalid or expired verification code.', 422)
+        reset_rate_limiter.record_success(rate_key)
         with self.db.transaction():
             self.db.run('UPDATE users SET password_hash=? WHERE id=?', (hash_password(password), user['id']))
+            self.db.run('UPDATE password_resets SET used=1 WHERE id=?', (reset_entry['id'],))
             self.db.run('DELETE FROM sessions WHERE user_id=?', (user['id'],))
-            self.audit(user, 'PASSWORD_RESET', 'user', user['id'], 'Password reset via login page')
-        return 200, {'message': 'Password reset successfully.'}
+            self.audit(user, 'PASSWORD_RESET', 'user', user['id'], 'Password reset verified via secure code')
+        return 200, {'message': 'Password reset successfully. You can now log in.'}

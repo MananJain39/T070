@@ -20,9 +20,13 @@ This directory contains standalone, modular features for the **Higher Studies Tr
 | **4.6 Text Limit** | `text-limit-correction-reason.js` | Max 300 characters on Correction Reason textarea with live character counter. |
 | **4.7 Text Limit** | `text-limit-progression-remarks.js` | Max 300 characters on Progression Remarks textarea with live character counter. |
 | **4.8 Text Limit** | `text-limit-admission-remarks.js` | Max 300 characters on Admission Remarks textarea with live character counter. |
-| **4.9 Text Limit** | `text-limit-master-name.js` | Max 80 characters on Master Data entity name inputs with live character counter. |
-| **4.10 Text Limit** | `text-limit-master-city.js` | Max 60 characters on Institution City input with live character counter. |
-| **4.11 Text Limit** | `text-limit-master-code.js` | Max 10 characters on Country Code input with live character counter. |
+| **4.9 Text Limit** | `text-limit-master-name.js` | Max 80 characters on Master Data entity name inputs (remaining / max). |
+| **4.10 Text Limit** | `text-limit-master-city.js` | Max 60 characters on Institution City input (remaining / max). |
+| **4.11 Text Limit** | `text-limit-master-code.js` | Max 10 characters on Country Code input (remaining / max). |
+| **4.12 Text Limit** | `text-limit-master-degree-type.js` | Max 50 characters on Programme Degree Type input (remaining / max). |
+| **4.13 Text Limit** | `text-limit-master-duration.js` | Max 30 characters on Programme Duration input (remaining / max). |
+| **4.14 Text Limit** | `text-limit-search-student.js` | Max 50 characters on Student Search filter input (remaining / max). |
+| **4.15 Text Limit** | `text-limit-reset-code.js` | Max 6 characters on Password Reset Verification Code (remaining / max). |
 | **5. Email Domain Check** | `email-domain-validator-lnmiit.js` | Enforces that email addresses must strictly belong to `@lnmiit.ac.in`. |
 
 ---

@@ -34,6 +34,11 @@ CREATE INDEX IF NOT EXISTS idx_progress_record ON progress_updates(record_id,upd
 CREATE INDEX IF NOT EXISTS idx_admission_record ON admission_updates(record_id,update_date);
 CREATE INDEX IF NOT EXISTS idx_verifications_record ON verifications(record_id,decision_date);
 CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_records(entity,entity_id,timestamp);
+CREATE TABLE IF NOT EXISTS password_resets (
+ id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id),
+ code TEXT NOT NULL, expires_at TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0 CHECK(used IN (0,1))
+);
+CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets(user_id, expires_at);
 '''
 
 class Repository:
@@ -45,6 +50,9 @@ class Repository:
         self.conn.execute('PRAGMA foreign_keys=ON')
         self.conn.execute('PRAGMA busy_timeout=5000')
         self.conn.executescript(SCHEMA)
+        # Automatic security hygiene: cleanup expired sessions and expired reset codes
+        self.conn.execute("DELETE FROM sessions WHERE expires_at <= datetime('now')")
+        self.conn.execute("DELETE FROM password_resets WHERE expires_at <= datetime('now')")
 
     def one(self, sql, args=()):
         row = self.conn.execute(sql, args).fetchone()

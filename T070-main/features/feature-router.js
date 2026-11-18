@@ -21,29 +21,36 @@
   // Add or remove filenames here to toggle features in the main project.
   // --------------------------------------------------------------------------
   const ACTIVE_FEATURE_ROUTES = [
-    // 1. Password Visibility Toggle (Show / Hide password icon)
-    //'password-show-hide-toggle.js',
+   // 1. Password Visibility Toggle (Show / Hide password icon)
+    'password-show-hide-toggle.js',
 
     // 2. Dark / Light Theme Switcher
-    //'theme-toggle-dark-light.js',
+    'theme-toggle-dark-light.js',
 
-    // 3. Reset Password on Login Page
-    //'login-reset-password.js',
+   // 3. Reset Password on Login Page
+    'login-reset-password.js',
 
-    // 4. Character limits for individual text fields (separate file per field)
-    // 'text-limit-user-name.js',
-    // 'text-limit-user-email.js',
-    // 'text-limit-user-password.js',
-    // 'text-limit-contact-info.js',
-    // 'text-limit-admission-evidence.js',
-    // 'text-limit-correction-reason.js',
-    // 'text-limit-progression-remarks.js',
-    // 'text-limit-admission-remarks.js',
-    // 'text-limit-master-name.js',
-    // 'text-limit-master-city.js',
-    // 'text-limit-master-code.js',
+   // // 4. Character limits for individual text fields (separate file per field)
+    'text-limit-user-name.js',
+    'text-limit-user-email.js',
+    'text-limit-user-password.js',
+    'text-limit-contact-info.js',
+    'text-limit-admission-evidence.js',
+    'text-limit-correction-reason.js',
+    'text-limit-progression-remarks.js',
+    'text-limit-admission-remarks.js',
+    'text-limit-master-name.js',
+    'text-limit-master-city.js',
+    'text-limit-master-code.js',
+    'text-limit-master-degree-type.js',
+    'text-limit-master-duration.js',
+    'text-limit-search-student.js',
+    'text-limit-reset-code.js',
 
-    // 5. LNMIIT Email Domain Validator (@lnmiit.ac.in)
+    // Restriction: Only alphabetic characters (A-Z, a-z) allowed in student fields
+    'student-field-alphabets-only.js',
+
+    //// 5. LNMIIT Email Domain Validator (@lnmiit.ac.in)
     //'email-domain-validator-lnmiit.js'
   ];
 
@@ -132,13 +139,12 @@
         }
       }
 
-      // Observe DOM mutations to notify features whenever views/modals change
+      // Observe DOM mutations across the entire body so dialogs/modals and view changes are caught
       const observer = new MutationObserver(() => {
         this.notifyDOMChange();
       });
 
-      const target = document.getElementById('main') || document.body;
-      observer.observe(target, { childList: true, subtree: true });
+      observer.observe(document.body, { childList: true, subtree: true });
 
       // Initial run
       setTimeout(() => this.notifyDOMChange(), 100);
