@@ -261,3 +261,19 @@ class Service:
 
     def notifications(self, user):
         return self.db.all('SELECT * FROM notifications WHERE recipient_id=? ORDER BY id DESC', (user['id'],))
+
+    def reset_password(self, email, password):
+        email = required(email, 'Email').lower()
+        if not (email.endswith('@lnmiit.ac.in') or email.endswith('@example.edu')):
+            fail('VALIDATION_ERROR', 'Only @lnmiit.ac.in email addresses are permitted for password reset.', 422)
+        password = required(password, 'Password')
+        if len(password) < 8:
+            fail('VALIDATION_ERROR', 'Password must have at least 8 characters.', 422)
+        user = self.db.one('SELECT * FROM users WHERE LOWER(email)=?', (email,))
+        if not user:
+            fail('NOT_FOUND', 'No user found with the provided email address.', 404)
+        with self.db.transaction():
+            self.db.run('UPDATE users SET password_hash=? WHERE id=?', (hash_password(password), user['id']))
+            self.db.run('DELETE FROM sessions WHERE user_id=?', (user['id'],))
+            self.audit(user, 'PASSWORD_RESET', 'user', user['id'], 'Password reset via login page')
+        return 200, {'message': 'Password reset successfully.'}

@@ -12,6 +12,7 @@ from .security import authenticate, current_user
 from .service import Service
 
 WEB = Path(__file__).resolve().parents[1] / 'web'
+FEATURES_DIR = Path(__file__).resolve().parents[2] / 'features'
 
 class Application:
     def __init__(self, database):
@@ -23,6 +24,8 @@ class Application:
         if path == '/api/auth/login' and method == 'POST':
             token, user = authenticate(self.db, body.get('email',''), body.get('password',''))
             return 200, {'token':token,'user':user}
+        if path == '/api/auth/reset-password' and method == 'POST':
+            return self.service.reset_password(body.get('email',''), body.get('password',''))
         user = current_user(self.db, authorization)
         if path == '/api/auth/logout' and method == 'POST':
             token_hash = hashlib.sha256(authorization[7:].encode()).hexdigest()
@@ -97,14 +100,36 @@ class Handler(BaseHTTPRequestHandler):
             self._respond(500, {'error':{'code':'INTERNAL_ERROR','message':'An unexpected error occurred.'}})
 
     def _static(self, path):
-        files = {'/':'index.html','/index.html':'index.html','/app.js':'app.js','/style.css':'style.css'}
-        name = files.get(path)
-        if not name: return self._respond(404, {'error':{'code':'NOT_FOUND','message':'Page not found.'}})
-        data = (WEB/name).read_bytes()
+        rel = path.lstrip('/') or 'index.html'
+        if rel.startswith('features/'):
+            sub_path = rel[len('features/'):]
+            file_path = (FEATURES_DIR / sub_path).resolve()
+            base_dir = FEATURES_DIR
+        else:
+            file_path = (WEB / rel).resolve()
+            base_dir = WEB
+        try:
+            file_path.relative_to(base_dir)
+        except ValueError:
+            return self._respond(403, {'error':{'code':'FORBIDDEN','message':'Access denied.'}})
+        if not file_path.is_file():
+            return self._respond(404, {'error':{'code':'NOT_FOUND','message':'Page not found.'}})
+        ext = file_path.suffix.lstrip('.').lower()
+        content_types = {
+            'html': 'text/html; charset=utf-8',
+            'js': 'text/javascript; charset=utf-8',
+            'css': 'text/css; charset=utf-8',
+            'svg': 'image/svg+xml',
+            'json': 'application/json; charset=utf-8',
+            'png': 'image/png'
+        }
+        content_type = content_types.get(ext, 'text/plain; charset=utf-8')
+        data = file_path.read_bytes()
         self.send_response(200)
-        self.send_header('Content-Type', {'html':'text/html','js':'text/javascript','css':'text/css'}[name.rsplit('.',1)[1]]+'; charset=utf-8')
-        self.send_header('Content-Length',str(len(data)))
-        self.end_headers(); self.wfile.write(data)
+        self.send_header('Content-Type', content_type)
+        self.send_header('Content-Length', str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
 
     do_GET = do_POST = do_PATCH = _request
 
