@@ -21,37 +21,52 @@
   // Add or remove filenames here to toggle features in the main project.
   // --------------------------------------------------------------------------
   const ACTIVE_FEATURE_ROUTES = [
-   // 1. Password Visibility Toggle (Show / Hide password icon)
-    'password-show-hide-toggle.js',
+    // [password] [visibility] [toggle] Show/hide password text and password eye icon.
+    // 'password-show-hide-toggle.js',
 
-    // 2. Dark / Light Theme Switcher
-    'theme-toggle-dark-light.js',
+    // [theme] [dark-mode] [light-mode] Switch between dark and light page themes.
+    // 'theme-toggle-dark-light.js',
 
-   // 3. Reset Password on Login Page
-    'login-reset-password.js',
+    // [reset-password] [forgot-password] [login] Open the forgot/reset-password modal on login.
+    // 'login-reset-password.js',
 
-   // // 4. Character limits for individual text fields (separate file per field)
-    'text-limit-user-name.js',
-    'text-limit-user-email.js',
-    'text-limit-user-password.js',
-    'text-limit-contact-info.js',
-    'text-limit-admission-evidence.js',
-    'text-limit-correction-reason.js',
-    'text-limit-progression-remarks.js',
-    'text-limit-admission-remarks.js',
-    'text-limit-master-name.js',
-    'text-limit-master-city.js',
-    'text-limit-master-code.js',
-    'text-limit-master-degree-type.js',
-    'text-limit-master-duration.js',
-    'text-limit-search-student.js',
-    'text-limit-reset-code.js',
+    // [character-limit] [text-limit] [counter] Apply field-specific character limits.
+    // [name] [50] Maximum 50 characters for user-name and search fields.
+    // 'text-limit-user-name.js',
+    // [email] [80] Maximum 80 characters for email inputs.
+    // 'text-limit-user-email.js',
+    // [password] [64] Maximum 64 characters for password inputs.
+    // 'text-limit-user-password.js',
+    // [contact] [100] Maximum 100 characters for contact information.
+    // 'text-limit-contact-info.js',
+    // [evidence] [200] Maximum 200 characters for admission evidence.
+    // 'text-limit-admission-evidence.js',
+    // [correction] [reason] [300] Maximum 300 characters for correction reasons.
+    // 'text-limit-correction-reason.js',
+    // [progression] [remarks] [300] Maximum 300 characters for progression remarks.
+    // 'text-limit-progression-remarks.js',
+    // [admission] [remarks] [300] Maximum 300 characters for admission remarks.
+    // 'text-limit-admission-remarks.js',
+    // [master] [name] [80] Maximum 80 characters for master-data names.
+    // 'text-limit-master-name.js',
+    // [master] [city] [60] Maximum 60 characters for institution city names.
+    // 'text-limit-master-city.js',
+    // [country] [code] [10] Maximum 10 characters for country codes.
+    // 'text-limit-master-code.js',
+    // [programme] [degree] [50] Maximum 50 characters for degree types.
+    // 'text-limit-master-degree-type.js',
+    // [programme] [duration] [30] Maximum 30 characters for programme duration.
+    // 'text-limit-master-duration.js',
+    // [search] [student] [50] Maximum 50 characters for student search filters.
+    // 'text-limit-search-student.js',
+    // [reset-code] [otp] [6] Maximum 6 characters for password reset codes.
+    // 'text-limit-reset-code.js',
 
-    // Restriction: Only alphabetic characters (A-Z, a-z) allowed in student fields
-    'student-field-alphabets-only.js',
+    // [alphabets-only] [name-validation] Allow letters and spaces only in student-name fields.
+    // 'student-field-alphabets-only.js',
 
-    //// 5. LNMIIT Email Domain Validator (@lnmiit.ac.in)
-    //'email-domain-validator-lnmiit.js'
+    // [email-domain] [LNMIIT] [validator] Restrict institutional email addresses to @lnmiit.ac.in.
+    // 'email-domain-validator-lnmiit.js'
   ];
 
   // --------------------------------------------------------------------------
