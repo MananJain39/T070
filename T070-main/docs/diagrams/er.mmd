@@ -1,0 +1,25 @@
+erDiagram
+ USERS ||--o{ HIGHER_STUDY_RECORDS : owns
+ USERS ||--o{ SESSIONS : holds
+ USERS ||--o{ AUDIT_RECORDS : acts
+ USERS ||--o{ NOTIFICATIONS : receives
+ COUNTRIES ||--o{ INSTITUTIONS : contains
+ COUNTRIES ||--o{ HIGHER_STUDY_RECORDS : study_country
+ INSTITUTIONS ||--o{ PROGRAMMES : offers
+ INSTITUTIONS ||--o{ HIGHER_STUDY_RECORDS : selected
+ PROGRAMMES ||--o{ HIGHER_STUDY_RECORDS : selected
+ HIGHER_STUDY_RECORDS ||--o{ ADMISSION_UPDATES : history
+ HIGHER_STUDY_RECORDS ||--o{ PROGRESS_UPDATES : history
+ HIGHER_STUDY_RECORDS ||--o{ VERIFICATIONS : decisions
+ HIGHER_STUDY_RECORDS ||--o{ NOTIFICATIONS : outcome
+ USERS { int id PK string email UK string role boolean active string password_hash }
+ SESSIONS { string token_hash PK int user_id FK string expires_at }
+ COUNTRIES { int id PK string name UK string code UK boolean active }
+ INSTITUTIONS { int id PK string name string city int country_id FK boolean active }
+ PROGRAMMES { int id PK int institution_id FK string name string degree_type boolean active }
+ HIGHER_STUDY_RECORDS { int id PK int student_id FK int institution_id FK int programme_id FK int country_id FK string admission_status string progression_status string verification_status }
+ ADMISSION_UPDATES { int id PK int record_id FK int updated_by FK string status string update_date }
+ PROGRESS_UPDATES { int id PK int record_id FK int updated_by FK string status string update_date }
+ VERIFICATIONS { int id PK int record_id FK int reviewer_id FK string decision string decision_date }
+ AUDIT_RECORDS { int id PK int actor_id FK string action string entity int entity_id string timestamp }
+ NOTIFICATIONS { int id PK int recipient_id FK int record_id FK string message string created_at }

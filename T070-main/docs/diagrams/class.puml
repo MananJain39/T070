@@ -1,0 +1,58 @@
+@startuml
+skinparam classAttributeIconSize 0
+abstract class User {
+  +id: Integer
+  +name: String
+  +email: String
+  +contactInfo: String
+  +active: Boolean
+  +login()
+  +logout()
+  +viewProfile()
+}
+class StudentAlumnus { +addHigherStudyRecord(); +submitForVerification(); +viewProgressionHistory() }
+class HigherStudiesCoordinator { +verifyRecord(); +requestCorrection(); +updateProgression(); +searchRecords() }
+class Administrator { +manageUsers(); +manageInstitution(); +manageProgramme(); +manageCountry() }
+class HigherStudyRecord {
+ +id: Integer
+ +admissionStatus: AdmissionStatus
+ +progressionStatus: ProgressionStatus
+ +verificationStatus: VerificationStatus
+ +admissionEvidence: String
+ +startDate: Date
+ +expectedCompletionDate: Date
+ +submit(); +edit(); +getHistory()
+}
+class Institution { +id: Integer; +name: String; +city: String; +active: Boolean }
+class Programme { +id: Integer; +name: String; +degreeType: String; +duration: String; +active: Boolean }
+class Country { +id: Integer; +name: String; +code: String; +active: Boolean }
+class AdmissionUpdate { +id: Integer; +status: AdmissionStatus; +updateDate: Date; +remarks: String; +updatedBy: User }
+class ProgressUpdate { +id: Integer; +status: ProgressionStatus; +updateDate: Date; +remarks: String; +updatedBy: User }
+class Verification { +id: Integer; +reviewer: HigherStudiesCoordinator; +decision: VerificationStatus; +reason: String; +decisionDate: Date }
+class AuditRecord { +id: Integer; +actor: User; +action: String; +entityId: Integer; +timestamp: DateTime }
+class Report { +type: String; +filters: String; +generate(): Summary }
+class Notification { +id: Integer; +recipient: StudentAlumnus; +message: String; +createdAt: DateTime }
+enum AdmissionStatus { Applied; OfferReceived; Admitted; Rejected; Deferred }
+enum ProgressionStatus { NotStarted; Ongoing; Completed; Discontinued }
+enum VerificationStatus { Draft; Submitted; Verified; CorrectionRequired }
+User <|-- StudentAlumnus
+User <|-- HigherStudiesCoordinator
+User <|-- Administrator
+StudentAlumnus "1" *-- "0..*" HigherStudyRecord
+Institution "1" o-- "0..*" Programme
+HigherStudyRecord "0..*" --> "1" Institution
+HigherStudyRecord "0..*" --> "1" Programme
+HigherStudyRecord "0..*" --> "1" Country
+HigherStudyRecord "1" *-- "0..*" AdmissionUpdate
+HigherStudyRecord "1" *-- "0..*" ProgressUpdate
+HigherStudyRecord "1" *-- "0..*" Verification
+HigherStudiesCoordinator "1" --> "0..*" Verification : reviews
+User "1" --> "0..*" AuditRecord : acts
+StudentAlumnus "1" --> "0..*" Notification : receives
+HigherStudyRecord ..> Notification : outcome
+HigherStudiesCoordinator ..> Report
+Administrator ..> Report
+HigherStudyRecord --> AdmissionStatus
+HigherStudyRecord --> ProgressionStatus
+HigherStudyRecord --> VerificationStatus
+@enduml

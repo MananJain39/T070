@@ -1,0 +1,29 @@
+@startuml
+actor "Coordinator/Administrator" as Actor
+participant "Web UI" as UI
+participant "Controller/API" as API
+participant "Authentication/Authorization" as Auth
+participant "Search & Reporting" as Search
+participant "Repository/Data Access Layer" as Repo
+database "Central Database" as DB
+Actor -> UI : Set combined filters
+UI -> API : GET /records?filters
+API -> Auth : validate bearer token
+alt expired
+ Auth --> API : 401
+ API --> UI : authentication error
+else valid
+ API -> Search : search(user, filters)
+ Search -> Search : validate status and numeric IDs
+ alt invalid filter
+  Search --> API : 422
+ else valid
+  Search -> Repo : joined SELECT with WHERE predicates
+  Repo -> DB : query indexed records
+  DB --> Repo : rows
+  Search --> API : matching records
+  API --> UI : 200 JSON
+  UI --> Actor : filtered table
+ end
+end
+@enduml

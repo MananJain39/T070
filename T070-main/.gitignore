@@ -1,0 +1,47 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# TeX build artefacts (keep sources, ignore generated)
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+*.nav
+*.snm
+*.vrb
+
+# Rendered outputs of SRS drafts (sources are tracked)
+docs/requirements/*.pdf
+
+# OS / tooling
+Thumbs.db
+desktop.ini
+# Local runtime data and secrets
+data/
+*.sqlite3
+*.sqlite3-*
+.env
+.env.*
+.coverage
+htmlcov/
+.pytest_cache/
+.aws

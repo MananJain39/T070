@@ -1,0 +1,36 @@
+@startuml
+actor "Higher Studies Coordinator" as Actor
+participant "Web UI" as UI
+participant "Controller/API" as API
+participant "Authentication/Authorization" as Auth
+participant "Progression Tracker" as Service
+participant "Repository/Data Access Layer" as Repo
+database "Central Database" as DB
+participant "Audit Logger" as Audit
+participant "Notification Service" as Notify
+Actor -> UI : Initiate update progression
+UI -> API : POST /records/{id}/progression
+API -> Auth : authenticate and authorize
+alt denied or expired
+ Auth --> API : 401/403
+ API --> UI : error
+else allowed
+ Auth --> API : user context
+ API -> Service : perform use case
+ Service -> Repo : SELECT record; validate status edge and date
+ Repo -> DB : query
+ DB --> Repo : rows
+ alt invalid or ineligible
+  Service --> API : 422 input / 409 state
+ else valid
+  Service -> Repo : begin transaction
+  Repo -> DB : INSERT ProgressUpdate; UPDATE current status
+  Service -> Audit : record action where applicable
+  Audit -> Repo : persist audit where applicable
+  Repo -> DB : commit
+  Service --> API : 200 status and history
+  API --> UI : success JSON
+  UI --> Actor : show result
+ end
+end
+@enduml

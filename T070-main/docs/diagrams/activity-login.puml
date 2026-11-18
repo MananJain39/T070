@@ -1,0 +1,19 @@
+@startuml
+|User|
+start
+:Enter email and password;
+|Web UI / API|
+:POST /auth/login;
+|Authentication & Access Control|
+:Find account; check active and password hash;
+if (Valid credentials?) then (yes)
+  |Data Access Layer|
+  :Store hashed session token and expiry;
+  |Web UI / API|
+  :Show dashboard;
+else (no)
+  |Web UI / API|
+  :Show generic authentication error;
+endif
+stop
+@enduml

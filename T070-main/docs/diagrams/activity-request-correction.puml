@@ -1,0 +1,21 @@
+@startuml
+|Higher Studies Coordinator|
+start
+:Review Submitted record; enter reason;
+|Web UI / API|
+:Send request;
+|Application Service|
+:Check role, state and nonblank reason;
+if (Valid correction request?) then (yes)
+  |Repository / Database|
+  :Begin transaction;
+  :Insert decision; set Correction Required; audit; notify student;
+  :Commit;
+  |Web UI / API|
+  :Show success;
+else (no)
+  |Web UI / API|
+  :Show reason or eligibility error;
+endif
+stop
+@enduml

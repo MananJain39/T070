@@ -1,0 +1,23 @@
+@startuml
+component "Web UI" as UI
+component "Controller/API" as API
+component "Authentication & Access Control" as Auth
+component "Higher-Study Record Manager" as Rec
+component "Verification Manager" as Ver
+component "Progression Tracker" as Prog
+component "Master Data Manager" as Master
+component "Search & Reporting" as Search
+component "User Management" as Users
+component "Audit Logger" as Audit
+component "Notification Service" as Notify
+component "Data Access Layer" as DAL
+database "Central Database (SQLite)" as DB
+UI --> API
+API --> Auth
+API --> Rec; API --> Ver; API --> Prog; API --> Master; API --> Search; API --> Users
+Rec --> DAL; Ver --> DAL; Prog --> DAL; Master --> DAL; Search --> DAL; Users --> DAL
+Rec --> Audit; Ver --> Audit; Prog --> Audit; Master --> Audit; Users --> Audit
+Ver --> Notify
+Audit --> DAL; Notify --> DAL
+DAL --> DB
+@enduml

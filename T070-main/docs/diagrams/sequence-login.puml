@@ -1,0 +1,25 @@
+@startuml
+actor User
+participant "Web UI" as UI
+participant "Controller/API" as API
+participant "Authentication & Access Control" as Auth
+participant "Repository/Data Access Layer" as Repo
+database "Central Database" as DB
+User -> UI : Enter credentials
+UI -> API : POST /auth/login
+API -> Auth : authenticate(email,password)
+Auth -> Repo : find user by email
+Repo -> DB : SELECT user
+DB --> Repo : user or none
+Auth -> Auth : check active and PBKDF2 hash
+alt invalid or inactive
+ Auth --> API : generic 401
+ API --> UI : authentication error
+else valid
+ Auth -> Repo : save hashed opaque token and expiry
+ Repo -> DB : INSERT session
+ Auth --> API : token and public user
+ API --> UI : 200
+ UI --> User : dashboard
+end
+@enduml

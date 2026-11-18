@@ -1,0 +1,21 @@
+@startuml
+|Higher Studies Coordinator|
+start
+:Search/select record; enter status, date, remarks;
+|Web UI / API|
+:Send request;
+|Application Service|
+:Check role, record, date and state edge;
+if (Valid progression update?) then (yes)
+  |Repository / Database|
+  :Begin transaction;
+  :Insert ProgressUpdate; change current status; audit; commit;
+  :Commit;
+  |Web UI / API|
+  :Show success;
+else (no)
+  |Web UI / API|
+  :Reject invalid update without changing state;
+endif
+stop
+@enduml

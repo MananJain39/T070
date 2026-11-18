@@ -1,0 +1,11 @@
+# Architecture
+
+The prototype follows the PDF's layered client-server design. A browser serves static HTML/CSS/JavaScript and calls a JSON HTTP API. API handlers perform transport parsing only; `Service` owns use cases and state changes; `Repository` owns SQLite SQL. `domain.py` contains statuses, validation and transition rules. Dependencies flow from UI to API to service/domain to repository/database. The SQLite connection is local and durable.
+
+Authentication uses a random opaque bearer token stored server-side as a SHA-256 digest, with expiry and explicit logout. Passwords use PBKDF2-HMAC-SHA256 with per-user salt. Role guards and ownership checks are server-side. All private routes require authentication; coordinator actions and admin changes have dedicated checks. Each state-changing workflow executes in one SQLite transaction, including history, audit and in-app notification rows. A failure rolls back the entire operation.
+
+Inputs are validated at service boundaries and constrained in the schema. Errors use stable JSON codes and no traces. Audit rows record actor, action, entity ID, timestamp and a compact detail snapshot; regular users cannot edit them. Notifications are in-app database records; there is no external delivery adapter. Reports are SQL aggregate read models. Indexes support owner, status and filter queries. The prototype runs as one Python process; for increased load, the same service/repository boundaries permit moving to a hosted relational database and multiworker server. The current local SQLite and in-memory server model are appropriate for a laboratory demo, not a high-availability institutional deployment.
+
+Implementation assumptions and the known difference from institutional SSO are recorded in `requirements-analysis.md`.
+
+The PDF's class diagram is a conceptual domain model. This implementation maps persistent domain classes to normalized rows and concentrates their operations in cohesive service methods. `User` specializations are represented by a constrained `role` and guards, avoiding duplicate credential fields or unused subclass shells. `Report` is an aggregate read model. This is the implementation mapping for the original class names; controller, repository and security helpers are implementation support types.

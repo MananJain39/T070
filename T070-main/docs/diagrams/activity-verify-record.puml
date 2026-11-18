@@ -1,0 +1,21 @@
+@startuml
+|Higher Studies Coordinator|
+start
+:Open queue; inspect Submitted record;
+|Web UI / API|
+:Send request;
+|Application Service|
+:Check coordinator and Submitted state;
+if (Eligible for verification?) then (yes)
+  |Repository / Database|
+  :Begin transaction;
+  :Insert Verification; set Verified; audit; notify student;
+  :Commit;
+  |Web UI / API|
+  :Show success;
+else (no)
+  |Web UI / API|
+  :Reject duplicate or ineligible decision;
+endif
+stop
+@enduml

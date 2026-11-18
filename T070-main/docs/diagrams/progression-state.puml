@@ -1,0 +1,9 @@
+@startuml
+[*] --> "Not Started"
+"Not Started" --> Ongoing : dated update
+"Not Started" --> Discontinued : dated update
+Ongoing --> Completed : dated update
+Ongoing --> Discontinued : dated update
+Completed --> [*]
+Discontinued --> [*]
+@enduml

@@ -1,0 +1,27 @@
+@startuml
+left to right direction
+actor "Student/Alumni" as S
+actor "Higher Studies Coordinator" as C
+actor Administrator as A
+rectangle "Higher Studies Tracking System" {
+ usecase "UC-001 Login" as U1
+ usecase "UC-002 Manage Users" as U2
+ usecase "UC-003 Maintain Higher-Study Profile" as U3
+ usecase "UC-004 Add Higher-Study Record" as U4
+ usecase "UC-005 Update Admission Status" as U5
+ usecase "UC-006 Update Progression" as U6
+ usecase "UC-007 Submit Record for Verification" as U7
+ usecase "UC-008 Verify Higher-Study Record" as U8
+ usecase "UC-009 Request Correction" as U9
+ usecase "UC-010 Search Higher-Study Records" as U10
+ usecase "UC-011 View Reports" as U11
+ usecase "UC-012 Manage Institution Data" as U12
+ usecase "UC-013 Manage Programme Data" as U13
+ usecase "UC-014 Manage Country Data" as U14
+}
+S --> U1; C --> U1; A --> U1
+S --> U3; S --> U4; S --> U7
+C --> U5; C --> U6; C --> U8; C --> U9; C --> U10; C --> U11
+A --> U2; A --> U10; A --> U11; A --> U12; A --> U13; A --> U14
+U9 ..> U8 : <<extend>>
+@enduml

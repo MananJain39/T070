@@ -1,0 +1,9 @@
+@startuml
+[*] --> Draft : create
+Draft --> Submitted : submit
+Submitted --> Verified : coordinator verifies
+Submitted --> "Correction Required" : coordinator requests correction
+"Correction Required" --> Draft : student edits
+"Correction Required" --> Submitted : student resubmits
+Verified --> Draft : student edits / new cycle
+@enduml

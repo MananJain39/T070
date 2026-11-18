@@ -1,0 +1,21 @@
+@startuml
+|Student/Alumni|
+start
+:Select Draft or Correction Required record;
+|Web UI / API|
+:Send request;
+|Application Service|
+:Check owner and transition;
+if (Eligible to submit?) then (yes)
+  |Repository / Database|
+  :Begin transaction;
+  :Set Submitted; audit; show queue status;
+  :Commit;
+  |Web UI / API|
+  :Show success;
+else (no)
+  |Web UI / API|
+  :Show state or permission error;
+endif
+stop
+@enduml

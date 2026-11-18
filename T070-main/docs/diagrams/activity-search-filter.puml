@@ -1,0 +1,25 @@
+@startuml
+|Coordinator/Administrator|
+start
+:Enter student and record filters;
+|Web UI / API|
+:GET /records with query parameters;
+|Authentication & Access Control|
+if (Authenticated?) then (yes)
+  |Search & Reporting|
+  :Validate controlled status filters;
+  if (Valid filters?) then (yes)
+    |Data Access Layer|
+    :Query joined records using combined filters;
+    |Web UI / API|
+    :Show matches;
+  else (no)
+    |Web UI / API|
+    :Show filter error;
+  endif
+else (no)
+  |Web UI / API|
+  :Show authentication error;
+endif
+stop
+@enduml

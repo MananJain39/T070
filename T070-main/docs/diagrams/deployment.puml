@@ -1,0 +1,12 @@
+@startuml
+node "Browser / client" as Browser { artifact "HTML, CSS, JavaScript" as UI }
+node "Local prototype host" as Host {
+ node "Python HTTP server" as Server {
+  artifact "Static web assets" as Static
+  artifact "JSON API + application services" as API
+ }
+ database "SQLite file" as DB
+}
+Browser --> Server : HTTP on localhost
+API --> DB : sqlite3
+@enduml

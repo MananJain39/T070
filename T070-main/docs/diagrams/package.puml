@@ -1,0 +1,18 @@
+@startuml
+package "src/web" as Web
+package "src/hsts" {
+ [api.py] as API
+ [service.py] as Service
+ [domain.py] as Domain
+ [security.py] as Security
+ [db.py] as DB
+ [seed.py] as Seed
+}
+package "tests" as Tests
+Web --> API
+API --> Service; API --> Security
+Service --> Domain; Service --> Security; Service --> DB
+Security --> DB
+Seed --> DB
+Tests ..> API; Tests ..> Service; Tests ..> Domain
+@enduml

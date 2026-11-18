@@ -1,0 +1,21 @@
+@startuml
+|Administrator|
+start
+:Select create, role or activation change;
+|Web UI / API|
+:Send request;
+|Application Service|
+:Check administrator and validate user data;
+if (Valid and authorized?) then (yes)
+  |Repository / Database|
+  :Begin transaction;
+  :Save user change; revoke sessions if inactive; audit;
+  :Commit;
+  |Web UI / API|
+  :Show success;
+else (no)
+  |Web UI / API|
+  :Show validation, conflict or permission error;
+endif
+stop
+@enduml

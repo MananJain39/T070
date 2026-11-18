@@ -1,0 +1,36 @@
+@startuml
+actor "Student/Alumni" as Actor
+participant "Web UI" as UI
+participant "Controller/API" as API
+participant "Authentication/Authorization" as Auth
+participant "Higher-Study Record Manager" as Service
+participant "Repository/Data Access Layer" as Repo
+database "Central Database" as DB
+participant "Audit Logger" as Audit
+participant "Notification Service" as Notify
+Actor -> UI : Initiate add record
+UI -> API : POST /records
+API -> Auth : authenticate and authorize
+alt denied or expired
+ Auth --> API : 401/403
+ API --> UI : error
+else allowed
+ Auth --> API : user context
+ API -> Service : perform use case
+ Service -> Repo : Validate active master references and programme institution
+ Repo -> DB : query
+ DB --> Repo : rows
+ alt invalid or ineligible
+  Service --> API : 422 validation / 403 role
+ else valid
+  Service -> Repo : begin transaction
+  Repo -> DB : INSERT Draft record and AdmissionUpdate
+  Service -> Audit : record action where applicable
+  Audit -> Repo : persist audit where applicable
+  Repo -> DB : commit
+  Service --> API : 201 Draft record
+  API --> UI : success JSON
+  UI --> Actor : show result
+ end
+end
+@enduml

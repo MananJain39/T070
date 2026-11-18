@@ -1,0 +1,21 @@
+@startuml
+|Student/Alumni|
+start
+:Open profile; enter institution, programme, country and admission;
+|Web UI / API|
+:Send request;
+|Application Service|
+:Check session, role, fields and references;
+if (Valid input and references?) then (yes)
+  |Repository / Database|
+  :Begin transaction;
+  :Persist Draft record and admission history; confirm;
+  :Commit;
+  |Web UI / API|
+  :Show success;
+else (no)
+  |Web UI / API|
+  :Show field or permission error;
+endif
+stop
+@enduml
